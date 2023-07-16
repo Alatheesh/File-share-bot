@@ -3,19 +3,31 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bot import Bot
 from config import ADMINS
 from helper_func import encode, get_message_id
-from config import SHORT_API, SHORT_URL
+from info import SHORT_API, SHORT_URL
 import requests
+import aiohttp 
+import logging
 
-def shorten_url(url):
-    query_params = {
-        "api": SHORT_API,
-        "url": url
+async def get_shortlink(link):
+
+    url = f'{SHORT_URL}/api'
+    params = {
+        'api': SHORT_API,
+        'url': link,
     }
-    response = requests.get(SHORT_URL, params=query_params)
-    if response.status_code == 200:
-        return response.text
-    else:
-        return None
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params, raise_for_status=True, ssl=False) as response:
+                data = await response.json()
+                if data["status"] == "success":
+                    return data['shortenedUrl']
+                else:
+                    logger.error(f"Error: {data['message']}")
+                    return link
+    except Exception as e:
+        logger.error(e)
+        return link
+
 
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
 async def batch(client: Client, message: Message):
@@ -48,7 +60,7 @@ async def batch(client: Client, message: Message):
     link = f"https://t.me/{client.username}?start={base64_string}"
     
     if SHORT_API and SHORT_URL:
-        short_link = shorten_url(link)
+        short_link = await get_shortlink(link)
         if short_link:
             link = short_link
     
@@ -74,7 +86,7 @@ async def link_generator(client: Client, message: Message):
     link = f"https://t.me/{client.username}?start={base64_string}"
     
     if SHORT_API and SHORT_URL:
-        short_link = shorten_url(link)
+        short_link = await get_shortlink(link)
         if short_link:
             link = short_link
     
