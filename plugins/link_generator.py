@@ -1,9 +1,8 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bot import Bot
-from config import ADMINS
+from config import ADMINS, SHORT_API, SHORT_URL
 from helper_func import encode, get_message_id
-from info import SHORT_API, SHORT_URL
 import requests
 import aiohttp 
 import logging
